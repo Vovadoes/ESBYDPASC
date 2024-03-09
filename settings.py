@@ -1,0 +1,2 @@
+DEDUG = True
+STANDART_DPI = 125  # %

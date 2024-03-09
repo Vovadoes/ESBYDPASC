@@ -1,0 +1,1364 @@
+----- ChartPLTWindow.py -----
+import sys
+
+import numpy as np
+from PyQt5 import QtWidgets
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, \
+    NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+
+from main import Calculation, ChartLinePltData, ChartQuadRegressPltData
+
+from functions import get_super
+
+
+class ChartPLTWindow(QtWidgets.QDialog):
+
+    def __init__(self, n, *args, **kwargs):
+        super(ChartPLTWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle(f'График {n}')
+        self.setFixedSize(800, 800)
+
+        fig = Figure()
+        self.axes = fig.add_subplot(111)
+
+        sc = FigureCanvasQTAgg(fig)
+
+        toolbar = NavigationToolbar(sc, self)
+
+        layout = QtWidgets.QGridLayout(self)
+        layout.addWidget(toolbar, 0, 0, 1, 1)
+        layout.addWidget(sc, 1, 0, 1, 1)
+
+
+
+    def line(self, data: ChartLinePltData):
+        self.axes.plot(data.df, marker='o', label=[f"E={i}" for i in data.columns])
+        self.axes.grid(linestyle='--')
+
+        self.axes.set_ylabel(data.xlabel)
+        self.axes.set_xlabel(data.ylabel)
+        self.axes.set_xlim([0, max(data.index) * 1.2])
+        self.axes.set_ylim([0, max(data.df.max()) * 1.2])
+
+    def quad_regress(self, data: ChartQuadRegressPltData):
+        for i in data.columns:
+            model = np.poly1d(np.polyfit(data.df[i].index.tolist(), data.df[i].values.tolist(), 2))
+            polyline = np.linspace(0.1, 1, 50)
+            coefficients = list(model.coefficients)
+            self.axes.plot(
+                polyline, model(polyline), linestyle='dashed', linewidth=2,
+                label=f"{round(coefficients[0], 3)}x{get_super('2')} "
+                      f"{'+' if coefficients[1] > 0 else ''} {round(coefficients[1], 3)}x "
+                      f"{'+' if coefficients[2] > 0 else ''} {round(coefficients[2], 3)}"
+            )
+
+    def start(self):
+        self.axes.legend()
+        self.show()
+        self.exec_()
+
+
+if __name__ == "__main__":
+    d_lst_input = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    E_lst_input = [1, 1.6]
+    calculation = Calculation(d_lst_input=d_lst_input, E_lst_input=E_lst_input)
+    app = QtWidgets.QApplication(sys.argv)
+    chartPlt = ChartPLTWindow(1)
+    chartPlt.line(calculation.chart_v_y_data)
+    chartPlt.quad_regress(calculation.chart_quad_regress_data)
+    chartPlt.start()
+    app.exec_()
+
+
+----- Charts.py -----
+import matplotlib.pyplot as plt
+from pandas import DataFrame
+
+pi = 3.14159265
+Yc = 17.3 * (10 ** -6)
+
+class ChartLinePltData:
+    def __init__(self, n, df: DataFrame, xlabel: str = '', ylabel: str = ''):
+        self.n = n
+        self.columns = df.columns
+        self.index = df.index
+        self.df = df
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+
+
+class ChartQuadRegressPltData:
+    def __init__(self, n, df: DataFrame, linestyle='dashed', linewidth=2):
+        self.n = n
+        self.columns = df.columns
+        self.index = df.index
+        self.df = df
+        self.linestyle = linestyle
+        self.linewidth = linewidth
+        pass
+
+
+class ChartLinePLT:
+    def __init__(self, data: ChartLinePltData, alpha=0.75):
+        plt.figure(data.n)
+        plt.plot(data.df, marker='o', label=[f"E={i}" for i in data.columns], alpha=alpha)
+        plt.grid(linestyle='--')
+        plt.ylabel(data.xlabel)
+        plt.xlabel(data.ylabel)
+        plt.xlim([0, max(data.index) * 1.2])
+        plt.ylim([0, max(data.df.max()) * 1.2])
+
+
+----- create_zip.py -----
+import shutil
+shutil.make_archive('dist/UI', 'zip', 'dist/UI')
+
+----- functions.py -----
+from math import pi
+from Monitor import getMonitors
+from settings import STANDART_DPI
+
+
+
+def get_super(x):
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+
+
+def get_sub(x):
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    sub_s = "ₐ₈CDₑբGₕᵢⱼₖₗₘₙₒₚQᵣₛₜᵤᵥwₓᵧZₐ♭꜀ᑯₑբ₉ₕᵢⱼₖₗₘₙₒₚ૧ᵣₛₜᵤᵥwₓᵧ₂₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎"
+    res = x.maketrans(''.join(normal), ''.join(sub_s))
+    return x.translate(res)
+
+
+def degrees_to_radians(angle: float) -> float:
+    return angle * pi / 180
+
+
+def change_size(window):
+    screen = window.screen()
+    monitors = getMonitors()
+    monitor = monitors[screen.name()]
+    print(screen.name(), monitor.get_max_dpi())
+    k = monitor.get_max_dpi() / STANDART_DPI
+    if k > 1:
+        window.setMinimumSize(round(window.size().width() * k), round(window.size().height() * k))
+        window.setMaximumSize(round(window.size().width() * k), round(window.size().height() * k))
+        window.setBaseSize(round(window.size().width() * k), round(window.size().height() * k))
+
+
+def radians_to_degrees(angle_rad: float) -> float:
+    return angle_rad * 180 / pi
+
+
+----- main.py -----
+import math
+
+
+
+
+pi = 3.14159265
+Yc = 17.3 * (10 ** -6)
+
+
+def myround(x: float, lst: list):
+    for i in lst:
+        if x < i:
+            return i
+    return lst[-1]
+
+
+class Calculation:
+    def __init__(self, n: float, k: int, lst: list):
+        self.lst_y = [(lst[i][0] + lst[i][1]) / 2 for i in range(k)]
+
+        self.lst_y_n = [self.lst_y[i] * lst[i][2] for i in range(k)]
+
+        self.x_cp_v = sum(self.lst_y_n) / n
+        print(f"{self.x_cp_v=}")
+
+        self.lst_y_x_n = [pow(self.lst_y[i] - self.x_cp_v, 2) * lst[i][2] for i in
+                          range(k)]
+
+        self.S_2_n = sum(self.lst_y_x_n) / (n - 1)
+
+        print(f'{self.S_2_n=}')
+
+        self.s = math.sqrt(self.S_2_n)
+        print(f"{self.s=}")
+
+        self.S_xcp = self.s / math.sqrt(n)
+        print(f"{self.S_xcp=}")
+
+
+if __name__ == "__main__":
+    n = 100
+    k = 7
+    lst = [
+        [23, 25, 3],
+        [25, 27, 10],
+        [27, 29, 6],
+        [29, 31, 16],
+        [31, 33, 15],
+        [33, 35, 30],
+        [35, 37, 20]
+    ]
+    calculation = Calculation(n, k, lst)
+
+
+
+----- Monitor.py -----
+import ctypes
+import win32api
+from screeninfo import get_monitors
+
+PROCESS_PER_MONITOR_DPI_AWARE = len(get_monitors())
+MDT_EFFECTIVE_DPI = 0
+
+
+def round_custom(num, step):
+    return round(num / step) * step
+
+
+class Monitor:
+    def __init__(self, shcore, monitor):
+        self.shcore = shcore
+        self.monitor = monitor
+        self.dpiX = ctypes.c_uint()
+        self.dpiY = ctypes.c_uint()
+        shcore.GetDpiForMonitor(
+            monitor[0].handle,
+            MDT_EFFECTIVE_DPI,
+            ctypes.byref(self.dpiX),
+            ctypes.byref(self.dpiY)
+        )
+
+    def get_max_dpi(self):
+        return max([round_custom(self.dpiX.value, 25), round_custom(self.dpiY.value, 25)])
+
+
+def getMonitors():
+    dct = {}
+    shcore = ctypes.windll.shcore
+    monitors = win32api.EnumDisplayMonitors()
+    shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+    for i, monitor in enumerate(monitors):
+        name = win32api.GetMonitorInfo(monitors[i][0])['Device']
+        monitor_obj = Monitor(shcore, monitor)
+        dct[name] = monitor_obj
+        print(
+            f"{name} dpiX: {round_custom(monitor_obj.dpiX.value, 25)}, dpiY: {round_custom(monitor_obj.dpiY.value, 25)}"
+        )
+    return dct
+
+
+----- MyThread.py -----
+from PyQt5.QtCore import QThread
+
+
+class MyThread(QThread):
+    def __init__(self, fun=lambda: None):
+        self.fun = fun
+        super(MyThread, self).__init__()
+
+    def start(self, priority: 'QThread.Priority' = None) -> None:
+        self.fun()
+        super().start()
+        self.exec_()
+        self.quit()
+
+
+----- py_to_txt.py -----
+import os
+
+path = "."
+
+exclude = set(['venv', '.idea', '.venv', 'dist'])
+lst = []
+for root, d_names, f_names in os.walk(path):
+    d_names[:] = [d for d in d_names if d not in exclude]
+    if len(d_names) != 0:
+        for i in range(len(f_names)):
+            if os.path.splitext(f_names[i])[1] == '.py':
+                lst.append(os.path.join(root, f_names[i]))
+print(lst)
+
+with open('AllCode.txt', 'w+', encoding="UTF-8") as fw:
+    for i in lst:
+        with open(i, 'r', encoding="UTF-8") as fr:
+            name = i.replace('.\\', '').replace('\\', '/')
+            fw.write('-' * 5 + f' {name} ' + '-' * 5)
+            fw.write('\n')
+            arr = fr.read().split('\n')
+            s = ''
+            for i in arr:
+                    s += i + '\n'
+            fw.write(s)
+            fw.write('\n')
+
+
+----- settings.py -----
+DEDUG = True
+
+
+----- Table.py -----
+from typing import Callable
+from typing import List, Any
+
+from PyQt5 import QtWidgets, QtGui
+from files.TableWindow import Ui_Form as Ui_Form_Table
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from UI import mywindow
+
+
+class Table(QtWidgets.QDialog):
+    def __init__(self, base: 'mywindow', n: int, m: int, data: List[List[Any]] = None,
+                 block: bool = False,
+                 heading_x: Callable[[int], str] = lambda iterator: str(iterator),
+                 heading_y: Callable[[int], str] = lambda iterator: str(iterator),
+                 filter_table=lambda dct:
+                 round(dct['value'], 5)
+                 if dct['value'] is int or dct['value'] is float else
+                 dct['value'],
+                 types_matrix=None
+                 ):
+        super(Table, self).__init__()
+        self.ui = Ui_Form_Table()
+        self.ui.setupUi(self)
+        self.setWindowTitle('Таблица')
+        self.base = base
+        self.block = block
+        self.heading_x = heading_x
+        self.heading_y = heading_y
+        if types_matrix is None:
+            types_matrix = [[float for _ in range(n)] for _ in range(m)]
+        self.types_matrix = types_matrix
+        if data is None:
+            data = []
+        self.data = data
+        self.n = n
+        self.m = m
+        self.filter = filter_table
+
+        VerticalHeaderLabels = [self.heading_y(i) for i in range(max(len(self.data), self.m))]
+        HorizontalHeaderLabels = [
+            self.heading_x(i) for i in
+            range(max(len(self.data[0]) if len(self.data) > 0 else self.n, self.n))
+        ]
+        for j in range(min(len(self.data[0]) if len(self.data) > 0 else self.n, self.n)):
+            self.ui.tableWidget.insertColumn(j)
+
+        for i in range(min(len(self.data), self.m)):
+            self.ui.tableWidget.insertRow(i)
+            for j in range(min(len(self.data[0]) if len(self.data) > 0 else self.n, self.n)):
+                self.ui.tableWidget.setItem(
+                    i,
+                    j,
+                    QtWidgets.QTableWidgetItem(
+                        str(self.filter({'i': i, 'j': j, 'value': self.data[i][j]}))
+                    )
+                )
+
+        for j in range(len(self.data[0]) if len(self.data) > 0 else 0, self.n):
+            self.ui.tableWidget.insertColumn(j)
+        for i in range(len(self.data), self.m):
+            self.ui.tableWidget.insertRow(i)
+
+        for i in range(0, self.m):
+            start = len(self.data[0]) if len(self.data) > 0 else 0
+            if len(self.data) <= i < self.m:
+                start = 0
+            for j in range(start, self.n):
+                self.ui.tableWidget.setItem(
+                    i,
+                    j,
+                    QtWidgets.QTableWidgetItem("0.0")
+                )
+        self.ui.tableWidget.setHorizontalHeaderLabels(HorizontalHeaderLabels)
+        self.ui.tableWidget.setVerticalHeaderLabels(VerticalHeaderLabels)
+
+        self.ui.tableWidget.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.ui.tableWidget.resizeColumnsToContents()
+
+        if self.block:
+            self.ui.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        self.ui.pushButton.clicked.connect(self.download_table)
+
+    def close_window(self):
+        self.close()
+
+    def download_table(self):
+        flag = False
+        self.data = []
+        for i in range(self.m):
+            lst = []
+            for j in range(self.n):
+                try:
+                    lst.append(
+                        self.types_matrix[i][j](self.ui.tableWidget.item(i, j).text().replace(",", '.')))
+                    self.ui.tableWidget.item(i, j).setBackground(QtGui.QColor(255, 255, 255))
+                except ValueError:
+                    self.ui.tableWidget.item(i, j).setBackground(QtGui.QColor(255, 0, 0))
+                    flag = True
+                except IndexError as s:
+                    print(i, j, s)
+            self.data.append(lst)
+        if flag:
+            self.data = []
+        else:
+            self.close()
+        print(f"download_table data = {self.data}")
+
+
+----- TableLoader.py -----
+from typing import List, Any, TYPE_CHECKING
+from PyQt5.QtWidgets import QLabel
+from Table import Table
+
+if TYPE_CHECKING:
+    from UI import mywindow
+
+
+class TableLoader:
+    def __init__(self, main_window, n: int = 0, m: int = 0, label: QLabel = None,
+                 data: List[List[Any]] = None, **kwargs):
+        self.data = data
+        if data is None:
+            self.data = []
+        self.n = n
+        self.m = m
+        self.main_window: 'mywindow' = main_window
+        self.kwargs = kwargs
+        self.label = label
+
+    def open_table(self):
+        self.main_window.variables.update()
+        tale_window = Table(self.main_window, self.n, self.m, self.data, **self.kwargs)
+        tale_window.show()
+        tale_window.exec_()
+        self.data = tale_window.data
+
+        if self.label:
+            if self.main_window:
+                self.label.setStyleSheet("background-color: lightgreen")
+            else:
+                self.label.setStyleSheet("background-color: red")
+
+    def valid(self, m, n):
+        if len(self.data) == self.m:
+            if len(self.data[0]) == self.n or len(self.data) == 0 == self.n:
+                if self.n == n and self.m == m:
+                    return True
+                else:
+                    self.n = n
+                    self.m = m
+        if self.label:
+            self.label.setStyleSheet("background-color: red")
+        return False
+
+
+----- test.py -----
+
+
+
+def f1(s):
+    lst1 = []
+    lst2 = []
+    lst4 = []
+
+    lst = s.split(', ')
+
+    for i in lst:
+        lst1.append(f"{i}=self.variables.{i},")
+        lst2.append(f"self.{i} = mywindow.is_float(self.main_window.ui.doubleSpinBox)")
+        lst4.append(f"self.{i}=None")
+
+    print()
+    for i in lst4:
+        print(i)
+    print()
+    for i in lst2:
+        print(i)
+    print()
+    for i in lst1:
+        print(i)
+
+
+s = 'n, k'
+f1(s)
+lst = '''self.n = mywindow.is_float(self.main_window.ui.doubleSpinBox_8)
+        self.k = mywindow.is_int(self.main_window.ui.doubleSpinBox_9)'''\
+    .replace('        ', '').replace('(', ')').split('\n')
+
+for i in lst:
+    a = i.split(')')
+
+
+----- UI.py -----
+from typing import Callable
+from typing import List, Any
+
+from PyQt5 import QtWidgets
+
+from files.MainWindow import Ui_MainWindow
+from files.ResultWindow import Ui_Form
+from files.TableWindow import Ui_Form as Ui_Form_Table
+
+from main import Calculation
+from functions import change_size, get_sub, get_super
+from MyThread import MyThread
+from TableLoader import TableLoader
+
+from settings import DEDUG
+
+import sys
+
+
+
+
+class Variables:
+    def __init__(self, main_window):
+        self.main_window: mywindow = main_window
+        self.n = None
+        self.k = None
+        self.load()
+
+    def load(self):
+        self.n = mywindow.is_float(self.main_window.ui.doubleSpinBox_8)
+        self.k = mywindow.is_int(self.main_window.ui.doubleSpinBox_9)
+
+    def update(self):
+        self.load()
+        self.main_window.table_loader1.m = self.k
+
+
+class mywindow(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super(mywindow, self).__init__()
+
+        self.calculation = None
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        if DEDUG:
+
+        change_size(self)
+
+        self.lst_Thread = []
+
+        self.variables = Variables(self)
+
+        loader1_n = 3
+        loader1_m = self.variables.k
+        loader1_label = self.ui.label_13
+        loader1_data = [
+            [23, 25, 3],
+            [25, 27, 10],
+            [27, 29, 6],
+            [29, 31, 16],
+            [31, 33, 15],
+            [33, 35, 30],
+            [35, 37, 20]
+        ]
+        loader1_block = False
+        loader1_heading_x = lambda iterator: \
+            ["Начало промежутка", "Конец промежутка", "Площадь, га"][iterator]
+        loader1_types_matrix = [[int, int, float] for _ in range(loader1_m)]
+
+
+        self.table_loader1 = TableLoader(
+            self, loader1_n, loader1_m, loader1_label,
+            block=loader1_block,
+            heading_x=loader1_heading_x,
+            types_matrix=loader1_types_matrix
+        )
+
+        if DEDUG:
+            pass
+            self.table_loader1.data = loader1_data
+
+        self.ui.pushButton_8.clicked.connect(self.table_loader1.open_table)
+
+
+        add_def_pushButton = lambda: None
+        self.ui.pushButton.clicked.connect(lambda: self.calculate(add_def_pushButton))
+
+    def calculate(self, fun, *args, **kwargs):
+        self.variables.update()
+        condition = self.table_loader1.valid(self.variables.k, 3)
+        if condition:
+            self.calculation = Calculation(
+                n=self.variables.n,
+                k=self.variables.k,
+                lst=self.table_loader1.data
+            )
+            fun(*args, **kwargs)
+            window = Finish(
+                self
+            )
+            window.show()
+
+            windowThread = MyThread(lambda: window.exec_())
+            windowThread.start()
+            self.lst_Thread.append(windowThread)
+
+    def exec_(self) -> int:
+        a = super().exec_()
+        for i in self.lst_Thread:
+            i.wait()
+        return a
+
+    @staticmethod
+    def is_float(value: QtWidgets.QDoubleSpinBox) -> float:
+        try:
+            a = float(value.value())
+            value.setStyleSheet("QDoubleSpinBox {}")
+            return a
+        except ValueError:
+            value.setStyleSheet("QDoubleSpinBox { background-color: red; }")
+            raise ValueError()
+
+    @staticmethod
+    def is_int(value: QtWidgets.QDoubleSpinBox) -> int:
+        try:
+            a = int(round(float(value.value())))
+            value.setStyleSheet("QDoubleSpinBox {}")
+            return a
+        except ValueError:
+            value.setStyleSheet("QDoubleSpinBox { background-color: red; }")
+            raise ValueError()
+
+
+class Finish(QtWidgets.QDialog):
+    def __init__(self, parent: mywindow):
+        super(Finish, self).__init__()
+        self.ui = Ui_Form()
+        self.parent = parent
+        self.ui.setupUi(self)
+        change_size(self)
+
+        self.ui.doubleSpinBox_9.setValue(round(self.parent.calculation.S_2_n, 2))
+        self.ui.doubleSpinBox_10.setValue(round(self.parent.calculation.s, 2))
+        self.ui.doubleSpinBox_11.setValue(round(self.parent.calculation.S_xcp, 2))
+
+        self.ui.textEdit.setText(
+            f"Следовательно, оценка средней урожайности сахарной свеклы на всем массиве равна {round(self.parent.calculation.x_cp_v)} ц со средней квадратической ошибкой {round(self.parent.calculation.S_xcp, 2)} ц. Оценка среднего квадратического отклонения урожайности на всем массиве равна {round(self.parent.calculation.s, 2)} ц."
+        )
+
+        lst = []
+        types_matrix = []
+        summ = 0
+        for i in range(self.parent.table_loader1.m):
+            data = self.parent.table_loader1.data
+            lst.append([
+                round(data[i][0]), round(data[i][1]), round(data[i][2], 2),
+                round(self.parent.calculation.lst_y[i], 2),
+                round(self.parent.calculation.lst_y_n[i], 2),
+                round(self.parent.calculation.lst_y_x_n[i], 2)
+            ])
+            types_matrix.append([int, int, float, float, float, float])
+            summ += data[i][2]
+
+        lst.append(['', '', round(summ), '', sum(self.parent.calculation.lst_y_n),
+                    sum(self.parent.calculation.lst_y_x_n)])
+        types_matrix.append([str, str, int, str, float, float])
+
+        lst.append(['', '', '', '', lst[-1][4] / summ,
+                    lst[-1][5] / self.parent.variables.n - 1])
+        types_matrix.append([str, str, str, str, float, float])
+
+        print(f"{lst=}")
+
+
+        loader_results_1_n = self.parent.table_loader1.n + 3
+        loader_results_1_m = self.parent.table_loader1.m + 2
+        loader_results_1_data = lst
+        types_matrix_results_1 = types_matrix
+        loader_results_1_block = True
+        loader_results_1_heading_x = lambda iterator: \
+            ["Начало промежутка", "Конец промежутка", "Площадь, га", "Середина интервала",
+             f"y{get_sub('i')} * n{get_sub('i')}", f"(y{get_sub('i')} - x{get_sub('v')}){get_super('2')} * n{get_sub('i')}"][iterator]
+        loader_results_1_heading_y = lambda iterator: str(iterator)
+        self.table_loader_results_1 = TableLoader(
+            self.parent, loader_results_1_n, loader_results_1_m, data=loader_results_1_data,
+            block=loader_results_1_block,
+            heading_x=loader_results_1_heading_x, heading_y=loader_results_1_heading_y,
+            types_matrix=types_matrix_results_1
+        )
+
+
+        self.table_loader_results_1.kwargs['block'] = True
+
+        self.lst_Thread = []
+
+        self.lst_Thread.append(MyThread(lambda: self.table_loader_results_1.open_table()))
+        self.ui.pushButton_2.clicked.connect(
+            lambda: self.lst_Thread[0].start()
+        )
+
+        self.ui.pushButton.clicked.connect(self.exit_w)
+
+    def exit_w(self):
+        self.table_loader_results_1.kwargs['block'] = False
+        self.close()
+
+
+    def view_table(self):
+        pass
+
+
+app = QtWidgets.QApplication([])
+application = mywindow()
+application.show()
+
+sys.exit(app.exec())
+
+
+----- files/1.py -----
+
+
+from PyQt5 import QtCore
+
+qt_resource_data = b"\
+\x00\x00\x01\xab\
+\x89\
+\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\
+\x00\x00\x19\x00\x00\x00\x1e\x08\x03\x00\x00\x00\xee\x32\x45\xe9\
+\x00\x00\x00\x01\x73\x52\x47\x42\x00\xae\xce\x1c\xe9\x00\x00\x00\
+\x69\x50\x4c\x54\x45\x00\x00\x00\x00\x00\x00\x00\x00\x3a\x00\x00\
+\x66\x00\x3a\x66\x00\x3a\x90\x00\x66\xb6\x3a\x00\x00\x3a\x66\x66\
+\x3a\x66\x90\x3a\x66\xb6\x3a\x90\xdb\x66\x00\x00\x66\x3a\x3a\x66\
+\x66\xb6\x66\x90\xdb\x66\xb6\xdb\x66\xb6\xff\x90\x3a\x00\x90\x90\
+\x66\x90\xb6\xdb\x90\xdb\xff\xb6\x66\x00\xb6\x66\x3a\xb6\x66\x66\
+\xb6\xdb\xdb\xb6\xff\xff\xdb\x90\x3a\xdb\xb6\x66\xdb\xb6\x90\xdb\
+\xff\xff\xff\xb6\x66\xff\xdb\x90\xff\xff\xb6\xff\xff\xdb\xca\x7c\
+\x17\xed\x00\x00\x00\x01\x74\x52\x4e\x53\x00\x40\xe6\xd8\x66\x00\
+\x00\x00\x09\x70\x48\x59\x73\x00\x00\x12\x74\x00\x00\x12\x74\x01\
+\xde\x66\x1f\x78\x00\x00\x00\x19\x74\x45\x58\x74\x53\x6f\x66\x74\
+\x77\x61\x72\x65\x00\x4d\x69\x63\x72\x6f\x73\x6f\x66\x74\x20\x4f\
+\x66\x66\x69\x63\x65\x7f\xed\x35\x71\x00\x00\x00\xa9\x49\x44\x41\
+\x54\x38\x4f\xed\x50\xd1\x12\x82\x20\x10\xbc\x33\x93\x52\x4a\xa5\
+\xd4\x0a\x13\xe1\xff\x3f\xb2\xe3\x70\x1a\x13\x7a\xe9\xb9\x7d\x80\
+\xe1\x6e\x6f\xf7\x58\x80\x3f\x7e\x4e\xc0\x3d\x4f\x02\x09\x59\xb7\
+\x91\x18\xb9\x4c\xd8\x3d\x3e\x3b\x06\xf1\x78\x77\xaa\x88\x2c\xad\
+\xc4\x8a\x8a\x3a\x92\x02\x8d\xcc\xd6\xd8\xd2\xb9\xc8\xd2\x05\xe0\
+\x54\x20\x6b\x9e\x5c\xc3\xca\xfd\x44\x6f\xa7\x78\x26\xd1\x99\xc5\
+\x76\x31\x22\xf3\x4c\xbf\x88\xb9\x01\x8b\x09\x46\xe1\xbd\x0d\x36\
+\x10\xde\x6c\xd7\x9a\xac\x33\xe5\xc8\xa6\xfe\xa3\xf9\xf5\xed\x60\
+\xe5\xe1\x9c\x4e\xd3\xa9\xc8\x71\x21\x7e\xef\xdc\x2e\x71\x1a\x7e\
+\x81\x66\x68\xad\xac\xe6\x32\xec\xb3\x42\x9f\xd5\x3e\x8e\x7c\x13\
+\x7a\x7a\xa3\xb8\xfa\x02\x54\x1b\x08\x6b\x10\x85\xbf\x98\x00\x00\
+\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82\
+"
+
+qt_resource_name = b"\
+\x00\x09\
+\x0c\x78\x54\x88\
+\x00\x6e\
+\x00\x65\x00\x77\x00\x50\x00\x72\x00\x65\x00\x66\x00\x69\x00\x78\
+\x00\x11\
+\x09\x9b\x6d\xc7\
+\x00\x63\
+\x00\x6c\x00\x69\x00\x70\x00\x5f\x00\x69\x00\x6d\x00\x61\x00\x67\x00\x65\x00\x30\x00\x30\x00\x32\x00\x2e\x00\x70\x00\x6e\x00\x67\
+\
+"
+
+qt_resource_struct_v1 = b"\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02\
+\x00\x00\x00\x18\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
+"
+
+qt_resource_struct_v2 = b"\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
+\x00\x00\x00\x00\x00\x00\x00\x00\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02\
+\x00\x00\x00\x00\x00\x00\x00\x00\
+\x00\x00\x00\x18\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
+\x00\x00\x01\x8e\x22\xf1\x44\x05\
+"
+
+qt_version = [int(v) for v in QtCore.qVersion().split('.')]
+if qt_version < [5, 8, 0]:
+    rcc_version = 1
+    qt_resource_struct = qt_resource_struct_v1
+else:
+    rcc_version = 2
+    qt_resource_struct = qt_resource_struct_v2
+
+def qInitResources():
+    QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
+def qCleanupResources():
+    QtCore.qUnregisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
+qInitResources()
+
+
+----- files/a_rc.py -----
+
+
+from PyQt5 import QtCore
+
+qt_resource_data = b"\
+\x00\x00\x01\xab\
+\x89\
+\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\
+\x00\x00\x19\x00\x00\x00\x1e\x08\x03\x00\x00\x00\xee\x32\x45\xe9\
+\x00\x00\x00\x01\x73\x52\x47\x42\x00\xae\xce\x1c\xe9\x00\x00\x00\
+\x69\x50\x4c\x54\x45\x00\x00\x00\x00\x00\x00\x00\x00\x3a\x00\x00\
+\x66\x00\x3a\x66\x00\x3a\x90\x00\x66\xb6\x3a\x00\x00\x3a\x66\x66\
+\x3a\x66\x90\x3a\x66\xb6\x3a\x90\xdb\x66\x00\x00\x66\x3a\x3a\x66\
+\x66\xb6\x66\x90\xdb\x66\xb6\xdb\x66\xb6\xff\x90\x3a\x00\x90\x90\
+\x66\x90\xb6\xdb\x90\xdb\xff\xb6\x66\x00\xb6\x66\x3a\xb6\x66\x66\
+\xb6\xdb\xdb\xb6\xff\xff\xdb\x90\x3a\xdb\xb6\x66\xdb\xb6\x90\xdb\
+\xff\xff\xff\xb6\x66\xff\xdb\x90\xff\xff\xb6\xff\xff\xdb\xca\x7c\
+\x17\xed\x00\x00\x00\x01\x74\x52\x4e\x53\x00\x40\xe6\xd8\x66\x00\
+\x00\x00\x09\x70\x48\x59\x73\x00\x00\x12\x74\x00\x00\x12\x74\x01\
+\xde\x66\x1f\x78\x00\x00\x00\x19\x74\x45\x58\x74\x53\x6f\x66\x74\
+\x77\x61\x72\x65\x00\x4d\x69\x63\x72\x6f\x73\x6f\x66\x74\x20\x4f\
+\x66\x66\x69\x63\x65\x7f\xed\x35\x71\x00\x00\x00\xa9\x49\x44\x41\
+\x54\x38\x4f\xed\x50\xd1\x12\x82\x20\x10\xbc\x33\x93\x52\x4a\xa5\
+\xd4\x0a\x13\xe1\xff\x3f\xb2\xe3\x70\x1a\x13\x7a\xe9\xb9\x7d\x80\
+\xe1\x6e\x6f\xf7\x58\x80\x3f\x7e\x4e\xc0\x3d\x4f\x02\x09\x59\xb7\
+\x91\x18\xb9\x4c\xd8\x3d\x3e\x3b\x06\xf1\x78\x77\xaa\x88\x2c\xad\
+\xc4\x8a\x8a\x3a\x92\x02\x8d\xcc\xd6\xd8\xd2\xb9\xc8\xd2\x05\xe0\
+\x54\x20\x6b\x9e\x5c\xc3\xca\xfd\x44\x6f\xa7\x78\x26\xd1\x99\xc5\
+\x76\x31\x22\xf3\x4c\xbf\x88\xb9\x01\x8b\x09\x46\xe1\xbd\x0d\x36\
+\x10\xde\x6c\xd7\x9a\xac\x33\xe5\xc8\xa6\xfe\xa3\xf9\xf5\xed\x60\
+\xe5\xe1\x9c\x4e\xd3\xa9\xc8\x71\x21\x7e\xef\xdc\x2e\x71\x1a\x7e\
+\x81\x66\x68\xad\xac\xe6\x32\xec\xb3\x42\x9f\xd5\x3e\x8e\x7c\x13\
+\x7a\x7a\xa3\xb8\xfa\x02\x54\x1b\x08\x6b\x10\x85\xbf\x98\x00\x00\
+\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82\
+"
+
+qt_resource_name = b"\
+\x00\x09\
+\x0c\x78\x54\x88\
+\x00\x6e\
+\x00\x65\x00\x77\x00\x50\x00\x72\x00\x65\x00\x66\x00\x69\x00\x78\
+\x00\x11\
+\x09\x9b\x6d\xc7\
+\x00\x63\
+\x00\x6c\x00\x69\x00\x70\x00\x5f\x00\x69\x00\x6d\x00\x61\x00\x67\x00\x65\x00\x30\x00\x30\x00\x32\x00\x2e\x00\x70\x00\x6e\x00\x67\
+\
+"
+
+qt_resource_struct_v1 = b"\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02\
+\x00\x00\x00\x18\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
+"
+
+qt_resource_struct_v2 = b"\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
+\x00\x00\x00\x00\x00\x00\x00\x00\
+\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02\
+\x00\x00\x00\x00\x00\x00\x00\x00\
+\x00\x00\x00\x18\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
+\x00\x00\x01\x8e\x22\xf1\x44\x05\
+"
+
+qt_version = [int(v) for v in QtCore.qVersion().split('.')]
+if qt_version < [5, 8, 0]:
+    rcc_version = 1
+    qt_resource_struct = qt_resource_struct_v1
+else:
+    rcc_version = 2
+    qt_resource_struct = qt_resource_struct_v2
+
+def qInitResources():
+    QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
+def qCleanupResources():
+    QtCore.qUnregisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
+qInitResources()
+
+
+----- files/MainWindow.py -----
+
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(1280, 300)
+        MainWindow.setMinimumSize(QtCore.QSize(1280, 300))
+        MainWindow.setMaximumSize(QtCore.QSize(1280, 300))
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.centralwidget)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.label_11 = QtWidgets.QLabel(self.centralwidget)
+        self.label_11.setMinimumSize(QtCore.QSize(400, 35))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_11.setFont(font)
+        self.label_11.setObjectName("label_11")
+        self.gridLayout_2.addWidget(self.label_11, 0, 0, 1, 1)
+        self.gridLayout = QtWidgets.QGridLayout()
+        self.gridLayout.setObjectName("gridLayout")
+        self.gridLayout_10 = QtWidgets.QGridLayout()
+        self.gridLayout_10.setObjectName("gridLayout_10")
+        self.label_39 = QtWidgets.QLabel(self.centralwidget)
+        self.label_39.setMinimumSize(QtCore.QSize(820, 35))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_39.setFont(font)
+        self.label_39.setObjectName("label_39")
+        self.gridLayout_10.addWidget(self.label_39, 0, 0, 1, 1)
+        self.label_41 = QtWidgets.QLabel(self.centralwidget)
+        self.label_41.setMinimumSize(QtCore.QSize(60, 0))
+        self.label_41.setMaximumSize(QtCore.QSize(60, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_41.setFont(font)
+        self.label_41.setObjectName("label_41")
+        self.gridLayout_10.addWidget(self.label_41, 0, 1, 1, 1)
+        self.label_42 = QtWidgets.QLabel(self.centralwidget)
+        self.label_42.setMinimumSize(QtCore.QSize(20, 0))
+        self.label_42.setMaximumSize(QtCore.QSize(20, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_42.setFont(font)
+        self.label_42.setObjectName("label_42")
+        self.gridLayout_10.addWidget(self.label_42, 0, 2, 1, 1)
+        self.doubleSpinBox_8 = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.doubleSpinBox_8.setMinimumSize(QtCore.QSize(214, 25))
+        self.doubleSpinBox_8.setMaximumSize(QtCore.QSize(16777215, 220))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.doubleSpinBox_8.setFont(font)
+        self.doubleSpinBox_8.setDecimals(2)
+        self.doubleSpinBox_8.setMinimum(-16777215.0)
+        self.doubleSpinBox_8.setMaximum(16777215.0)
+        self.doubleSpinBox_8.setSingleStep(0.01)
+        self.doubleSpinBox_8.setObjectName("doubleSpinBox_8")
+        self.gridLayout_10.addWidget(self.doubleSpinBox_8, 0, 3, 1, 1)
+        self.label_43 = QtWidgets.QLabel(self.centralwidget)
+        self.label_43.setMinimumSize(QtCore.QSize(35, 0))
+        self.label_43.setMaximumSize(QtCore.QSize(35, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_43.setFont(font)
+        self.label_43.setObjectName("label_43")
+        self.gridLayout_10.addWidget(self.label_43, 0, 4, 1, 1)
+        self.label_44 = QtWidgets.QLabel(self.centralwidget)
+        self.label_44.setText("")
+        self.label_44.setObjectName("label_44")
+        self.gridLayout_10.addWidget(self.label_44, 0, 5, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_10, 0, 0, 1, 1)
+        self.gridLayout_11 = QtWidgets.QGridLayout()
+        self.gridLayout_11.setObjectName("gridLayout_11")
+        self.label_40 = QtWidgets.QLabel(self.centralwidget)
+        self.label_40.setMinimumSize(QtCore.QSize(820, 35))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_40.setFont(font)
+        self.label_40.setObjectName("label_40")
+        self.gridLayout_11.addWidget(self.label_40, 0, 0, 1, 1)
+        self.label_45 = QtWidgets.QLabel(self.centralwidget)
+        self.label_45.setMinimumSize(QtCore.QSize(60, 0))
+        self.label_45.setMaximumSize(QtCore.QSize(60, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_45.setFont(font)
+        self.label_45.setObjectName("label_45")
+        self.gridLayout_11.addWidget(self.label_45, 0, 1, 1, 1)
+        self.label_46 = QtWidgets.QLabel(self.centralwidget)
+        self.label_46.setMinimumSize(QtCore.QSize(20, 0))
+        self.label_46.setMaximumSize(QtCore.QSize(20, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_46.setFont(font)
+        self.label_46.setObjectName("label_46")
+        self.gridLayout_11.addWidget(self.label_46, 0, 2, 1, 1)
+        self.doubleSpinBox_9 = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.doubleSpinBox_9.setMinimumSize(QtCore.QSize(214, 25))
+        self.doubleSpinBox_9.setMaximumSize(QtCore.QSize(16777215, 220))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.doubleSpinBox_9.setFont(font)
+        self.doubleSpinBox_9.setDecimals(0)
+        self.doubleSpinBox_9.setMinimum(-16777215.0)
+        self.doubleSpinBox_9.setMaximum(16777215.0)
+        self.doubleSpinBox_9.setSingleStep(1.0)
+        self.doubleSpinBox_9.setObjectName("doubleSpinBox_9")
+        self.gridLayout_11.addWidget(self.doubleSpinBox_9, 0, 3, 1, 1)
+        self.label_47 = QtWidgets.QLabel(self.centralwidget)
+        self.label_47.setMinimumSize(QtCore.QSize(35, 0))
+        self.label_47.setMaximumSize(QtCore.QSize(35, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_47.setFont(font)
+        self.label_47.setObjectName("label_47")
+        self.gridLayout_11.addWidget(self.label_47, 0, 4, 1, 1)
+        self.label_48 = QtWidgets.QLabel(self.centralwidget)
+        self.label_48.setText("")
+        self.label_48.setObjectName("label_48")
+        self.gridLayout_11.addWidget(self.label_48, 0, 5, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_11, 1, 0, 1, 1)
+        self.gridLayout_8 = QtWidgets.QGridLayout()
+        self.gridLayout_8.setObjectName("gridLayout_8")
+        self.label_37 = QtWidgets.QLabel(self.centralwidget)
+        self.label_37.setMinimumSize(QtCore.QSize(0, 0))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_37.setFont(font)
+        self.label_37.setObjectName("label_37")
+        self.gridLayout_8.addWidget(self.label_37, 0, 0, 1, 1)
+        self.gridLayout_14 = QtWidgets.QGridLayout()
+        self.gridLayout_14.setObjectName("gridLayout_14")
+        self.label_13 = QtWidgets.QLabel(self.centralwidget)
+        self.label_13.setMinimumSize(QtCore.QSize(50, 0))
+        self.label_13.setMaximumSize(QtCore.QSize(16777215, 30))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_13.setFont(font)
+        self.label_13.setStyleSheet("background-color: red")
+        self.label_13.setText("")
+        self.label_13.setObjectName("label_13")
+        self.gridLayout_14.addWidget(self.label_13, 0, 1, 1, 1)
+        self.pushButton_8 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_8.setMinimumSize(QtCore.QSize(415, 0))
+        self.pushButton_8.setMaximumSize(QtCore.QSize(16777215, 30))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.pushButton_8.setFont(font)
+        self.pushButton_8.setObjectName("pushButton_8")
+        self.gridLayout_14.addWidget(self.pushButton_8, 0, 0, 1, 1)
+        self.gridLayout_8.addLayout(self.gridLayout_14, 1, 0, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_8, 2, 0, 1, 1)
+        self.gridLayout.setRowStretch(0, 1)
+        self.gridLayout.setRowStretch(1, 1)
+        self.gridLayout.setRowStretch(2, 2)
+        self.gridLayout_2.addLayout(self.gridLayout, 1, 0, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.pushButton.setFont(font)
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout_2.addWidget(self.pushButton, 2, 0, 1, 1)
+        self.gridLayout_2.setRowStretch(0, 1)
+        self.gridLayout_2.setRowStretch(1, 4)
+        self.gridLayout_2.setRowStretch(2, 1)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
+        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Оценка параметров распределения урожайности и сахарной свеклы по данным выбора</p></body></html>"))
+        self.label_39.setText(_translate("MainWindow", "<html><head/><body><p>Введите площадь участка, на котором определяется урожайность сахарной свёклы:</p></body></html>"))
+        self.label_41.setText(_translate("MainWindow", "<html><head/><body><p>n</p></body></html>"))
+        self.label_42.setText(_translate("MainWindow", "<html><head/><body><p>=</p></body></html>"))
+        self.label_43.setText(_translate("MainWindow", "<html><head/><body><p>га</p></body></html>"))
+        self.label_40.setText(_translate("MainWindow", "<html><head/><body><p>Введите количество интервалов группировки данных по урожайности:</p></body></html>"))
+        self.label_45.setText(_translate("MainWindow", "<html><head/><body><p>k</p></body></html>"))
+        self.label_46.setText(_translate("MainWindow", "<html><head/><body><p>=</p></body></html>"))
+        self.label_47.setText(_translate("MainWindow", "<html><head/><body><p/></body></html>"))
+        self.label_37.setText(_translate("MainWindow", "<html><head/><body><p>Заполним исходную таблицу:</p></body></html>"))
+        self.pushButton_8.setText(_translate("MainWindow", "Ввести таблицу"))
+        self.pushButton.setText(_translate("MainWindow", "Рассчитать"))
+
+
+----- files/ResultWindow.py -----
+
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class Ui_Form(object):
+    def setupUi(self, Form):
+        Form.setObjectName("Form")
+        Form.resize(1040, 275)
+        Form.setMinimumSize(QtCore.QSize(1040, 275))
+        Form.setMaximumSize(QtCore.QSize(1040, 275))
+        Form.setStyleSheet("")
+        self.gridLayout_2 = QtWidgets.QGridLayout(Form)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.gridLayout = QtWidgets.QGridLayout()
+        self.gridLayout.setObjectName("gridLayout")
+        self.gridLayout_17 = QtWidgets.QGridLayout()
+        self.gridLayout_17.setObjectName("gridLayout_17")
+        self.label_34 = QtWidgets.QLabel(Form)
+        self.label_34.setMinimumSize(QtCore.QSize(20, 0))
+        self.label_34.setMaximumSize(QtCore.QSize(20, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_34.setFont(font)
+        self.label_34.setObjectName("label_34")
+        self.gridLayout_17.addWidget(self.label_34, 0, 2, 1, 1)
+        self.doubleSpinBox_9 = QtWidgets.QDoubleSpinBox(Form)
+        self.doubleSpinBox_9.setEnabled(False)
+        self.doubleSpinBox_9.setMinimumSize(QtCore.QSize(214, 25))
+        self.doubleSpinBox_9.setMaximumSize(QtCore.QSize(16777215, 220))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.doubleSpinBox_9.setFont(font)
+        self.doubleSpinBox_9.setStyleSheet("color: black; background-color: white;")
+        self.doubleSpinBox_9.setDecimals(2)
+        self.doubleSpinBox_9.setMinimum(-999999999.0)
+        self.doubleSpinBox_9.setMaximum(999999999.0)
+        self.doubleSpinBox_9.setSingleStep(0.001)
+        self.doubleSpinBox_9.setProperty("value", 0.0)
+        self.doubleSpinBox_9.setObjectName("doubleSpinBox_9")
+        self.gridLayout_17.addWidget(self.doubleSpinBox_9, 0, 3, 1, 1)
+        self.label_36 = QtWidgets.QLabel(Form)
+        self.label_36.setMinimumSize(QtCore.QSize(650, 0))
+        self.label_36.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_36.setFont(font)
+        self.label_36.setObjectName("label_36")
+        self.gridLayout_17.addWidget(self.label_36, 0, 0, 1, 1)
+        self.label_35 = QtWidgets.QLabel(Form)
+        self.label_35.setMinimumSize(QtCore.QSize(60, 0))
+        self.label_35.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_35.setFont(font)
+        self.label_35.setText("")
+        self.label_35.setObjectName("label_35")
+        self.gridLayout_17.addWidget(self.label_35, 0, 4, 1, 1)
+        self.label_37 = QtWidgets.QLabel(Form)
+        self.label_37.setMinimumSize(QtCore.QSize(35, 0))
+        self.label_37.setMaximumSize(QtCore.QSize(35, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_37.setFont(font)
+        self.label_37.setObjectName("label_37")
+        self.gridLayout_17.addWidget(self.label_37, 0, 1, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_17, 0, 0, 1, 1)
+        self.gridLayout_18 = QtWidgets.QGridLayout()
+        self.gridLayout_18.setObjectName("gridLayout_18")
+        self.label_38 = QtWidgets.QLabel(Form)
+        self.label_38.setMinimumSize(QtCore.QSize(20, 0))
+        self.label_38.setMaximumSize(QtCore.QSize(20, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_38.setFont(font)
+        self.label_38.setObjectName("label_38")
+        self.gridLayout_18.addWidget(self.label_38, 0, 2, 1, 1)
+        self.doubleSpinBox_10 = QtWidgets.QDoubleSpinBox(Form)
+        self.doubleSpinBox_10.setEnabled(False)
+        self.doubleSpinBox_10.setMinimumSize(QtCore.QSize(214, 25))
+        self.doubleSpinBox_10.setMaximumSize(QtCore.QSize(16777215, 220))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.doubleSpinBox_10.setFont(font)
+        self.doubleSpinBox_10.setStyleSheet("color: black; background-color: white;")
+        self.doubleSpinBox_10.setDecimals(2)
+        self.doubleSpinBox_10.setMinimum(-999999999.0)
+        self.doubleSpinBox_10.setMaximum(999999999.0)
+        self.doubleSpinBox_10.setSingleStep(0.001)
+        self.doubleSpinBox_10.setProperty("value", 0.0)
+        self.doubleSpinBox_10.setObjectName("doubleSpinBox_10")
+        self.gridLayout_18.addWidget(self.doubleSpinBox_10, 0, 3, 1, 1)
+        self.label_39 = QtWidgets.QLabel(Form)
+        self.label_39.setMinimumSize(QtCore.QSize(650, 0))
+        self.label_39.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_39.setFont(font)
+        self.label_39.setObjectName("label_39")
+        self.gridLayout_18.addWidget(self.label_39, 0, 0, 1, 1)
+        self.label_40 = QtWidgets.QLabel(Form)
+        self.label_40.setMinimumSize(QtCore.QSize(60, 0))
+        self.label_40.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_40.setFont(font)
+        self.label_40.setText("")
+        self.label_40.setObjectName("label_40")
+        self.gridLayout_18.addWidget(self.label_40, 0, 4, 1, 1)
+        self.label_41 = QtWidgets.QLabel(Form)
+        self.label_41.setMinimumSize(QtCore.QSize(35, 0))
+        self.label_41.setMaximumSize(QtCore.QSize(35, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_41.setFont(font)
+        self.label_41.setObjectName("label_41")
+        self.gridLayout_18.addWidget(self.label_41, 0, 1, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_18, 1, 0, 1, 1)
+        self.gridLayout_19 = QtWidgets.QGridLayout()
+        self.gridLayout_19.setObjectName("gridLayout_19")
+        self.label_42 = QtWidgets.QLabel(Form)
+        self.label_42.setMinimumSize(QtCore.QSize(20, 0))
+        self.label_42.setMaximumSize(QtCore.QSize(20, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_42.setFont(font)
+        self.label_42.setObjectName("label_42")
+        self.gridLayout_19.addWidget(self.label_42, 0, 2, 1, 1)
+        self.doubleSpinBox_11 = QtWidgets.QDoubleSpinBox(Form)
+        self.doubleSpinBox_11.setEnabled(False)
+        self.doubleSpinBox_11.setMinimumSize(QtCore.QSize(214, 25))
+        self.doubleSpinBox_11.setMaximumSize(QtCore.QSize(16777215, 220))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.doubleSpinBox_11.setFont(font)
+        self.doubleSpinBox_11.setStyleSheet("color: black; background-color: white;")
+        self.doubleSpinBox_11.setDecimals(2)
+        self.doubleSpinBox_11.setMinimum(-999999999.0)
+        self.doubleSpinBox_11.setMaximum(999999999.0)
+        self.doubleSpinBox_11.setSingleStep(0.001)
+        self.doubleSpinBox_11.setProperty("value", 0.0)
+        self.doubleSpinBox_11.setObjectName("doubleSpinBox_11")
+        self.gridLayout_19.addWidget(self.doubleSpinBox_11, 0, 3, 1, 1)
+        self.label_43 = QtWidgets.QLabel(Form)
+        self.label_43.setMinimumSize(QtCore.QSize(650, 0))
+        self.label_43.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_43.setFont(font)
+        self.label_43.setObjectName("label_43")
+        self.gridLayout_19.addWidget(self.label_43, 0, 0, 1, 1)
+        self.label_44 = QtWidgets.QLabel(Form)
+        self.label_44.setMinimumSize(QtCore.QSize(60, 0))
+        self.label_44.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_44.setFont(font)
+        self.label_44.setText("")
+        self.label_44.setObjectName("label_44")
+        self.gridLayout_19.addWidget(self.label_44, 0, 4, 1, 1)
+        self.label_45 = QtWidgets.QLabel(Form)
+        self.label_45.setMinimumSize(QtCore.QSize(35, 0))
+        self.label_45.setMaximumSize(QtCore.QSize(35, 16777215))
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.label_45.setFont(font)
+        self.label_45.setObjectName("label_45")
+        self.gridLayout_19.addWidget(self.label_45, 0, 1, 1, 1)
+        self.gridLayout.addLayout(self.gridLayout_19, 2, 0, 1, 1)
+        self.textEdit = QtWidgets.QTextEdit(Form)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.textEdit.setFont(font)
+        self.textEdit.setObjectName("textEdit")
+        self.gridLayout.addWidget(self.textEdit, 3, 0, 1, 1)
+        self.gridLayout_2.addLayout(self.gridLayout, 0, 0, 1, 2)
+        self.pushButton_2 = QtWidgets.QPushButton(Form)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.pushButton_2.setFont(font)
+        self.pushButton_2.setStyleSheet("")
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.gridLayout_2.addWidget(self.pushButton_2, 1, 0, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(Form)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(14)
+        self.pushButton.setFont(font)
+        self.pushButton.setStyleSheet("")
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout_2.addWidget(self.pushButton, 1, 1, 1, 1)
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
+        self.label_34.setText(_translate("Form", "="))
+        self.label_36.setText(_translate("Form", "<html><head/><body><p>Приближенное значение дисперсии на всем массиве:</p></body></html>"))
+        self.label_38.setText(_translate("Form", "="))
+        self.label_39.setText(_translate("Form", "<html><head/><body><p>Среднее квадратичное отклонение урожайности на всем массиве:</p></body></html>"))
+        self.label_41.setText(_translate("Form", "<html><head/><body><p>S</p></body></html>"))
+        self.label_42.setText(_translate("Form", "="))
+        self.label_43.setText(_translate("Form", "<html><head/><body><p>Среднее квадратическое отклонение выборочное средней:</p></body></html>"))
+        self.label_45.setText(_translate("Form", "<html><head/><body><p><img src=\":/newPrefix/clip_image002.png\"/></p></body></html>"))
+        self.pushButton_2.setText(_translate("Form", "Промежуточные расчеты"))
+        self.pushButton.setText(_translate("Form", "ОК"))
+import files.a_rc
+
+
+----- files/TableWindow.py -----
+
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class Ui_Form(object):
+    def setupUi(self, Form):
+        Form.setObjectName("Form")
+        Form.resize(1100, 700)
+        self.gridLayout = QtWidgets.QGridLayout(Form)
+        self.gridLayout.setObjectName("gridLayout")
+        self.tableWidget = QtWidgets.QTableWidget(Form)
+        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setColumnCount(0)
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.horizontalHeader().setDefaultSectionSize(100)
+        self.tableWidget.verticalHeader().setDefaultSectionSize(75)
+        self.gridLayout.addWidget(self.tableWidget, 0, 0, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(Form)
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout.addWidget(self.pushButton, 1, 0, 1, 1)
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Form"))
+        self.pushButton.setText(_translate("Form", "Готово"))
+
+

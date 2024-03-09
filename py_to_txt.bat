@@ -1,0 +1,1 @@
+".venv\Scripts\activate.bat" && python py_to_txt.py && pause
