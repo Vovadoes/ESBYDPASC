@@ -49,6 +49,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_41.setFont(font)
         self.label_41.setObjectName("label_41")
         self.gridLayout_10.addWidget(self.label_41, 0, 1, 1, 1)
@@ -104,6 +105,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_45.setFont(font)
         self.label_45.setObjectName("label_45")
         self.gridLayout_11.addWidget(self.label_45, 0, 1, 1, 1)
@@ -201,8 +203,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
-        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Оценка параметров распределения урожайности и сахарной свеклы по данным выбора</p></body></html>"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Оценка параметров распределения урожайности сахарной свеклы по данным выборки"))
+        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Оценка параметров распределения урожайности сахарной свеклы по данным выборки</p></body></html>"))
         self.label_39.setText(_translate("MainWindow", "<html><head/><body><p>Введите площадь участка, на котором определяется урожайность сахарной свёклы:</p></body></html>"))
         self.label_41.setText(_translate("MainWindow", "<html><head/><body><p>n</p></body></html>"))
         self.label_42.setText(_translate("MainWindow", "<html><head/><body><p>=</p></body></html>"))

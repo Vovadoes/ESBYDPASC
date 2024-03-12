@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Оценка параметров распределения урожайности и сахарной свеклы по данным выбора</string>
+   <string>Оценка параметров распределения урожайности сахарной свеклы по данным выборки</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,4,1">
@@ -44,7 +44,7 @@
        </font>
       </property>
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Оценка параметров распределения урожайности и сахарной свеклы по данным выбора&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Оценка параметров распределения урожайности сахарной свеклы по данным выборки&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>
@@ -89,6 +89,7 @@
            <font>
             <family>Times New Roman</family>
             <pointsize>14</pointsize>
+            <italic>true</italic>
            </font>
           </property>
           <property name="text">
@@ -228,6 +229,7 @@
            <font>
             <family>Times New Roman</family>
             <pointsize>14</pointsize>
+            <italic>true</italic>
            </font>
           </property>
           <property name="text">
