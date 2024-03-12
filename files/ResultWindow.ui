@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Оценка параметров распределения урожайности и сахарной свеклы по данным выбора</string>
+   <string>Оценка параметров распределения урожайности сахарной свеклы по данным выборки</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>

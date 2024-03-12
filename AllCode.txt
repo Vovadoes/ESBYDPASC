@@ -572,7 +572,8 @@ class mywindow(QtWidgets.QMainWindow):
         ]
         loader1_block = False
         loader1_heading_x = lambda iterator: \
-            ["Начало промежутка", "Конец промежутка", "Площадь, га"][iterator]
+            ["Урожайность, ц/га\nНачало промежутка", "Урожайность, ц/га\nКонец промежутка",
+             "Площадь, га"][iterator]
         loader1_types_matrix = [[int, int, float] for _ in range(loader1_m)]
 
 
@@ -652,7 +653,7 @@ class Finish(QtWidgets.QDialog):
         self.ui.doubleSpinBox_11.setValue(round(self.parent.calculation.S_xcp, 2))
 
         self.ui.textEdit.setText(
-            f"Следовательно, оценка средней урожайности сахарной свеклы на всем массиве равна {round(self.parent.calculation.x_cp_v)} ц со средней квадратической ошибкой {round(self.parent.calculation.S_xcp, 2)} ц. Оценка среднего квадратического отклонения урожайности на всем массиве равна {round(self.parent.calculation.s, 2)} ц."
+            f"Приближенное значение средней урожайности равно x(среднее) = {str(round(self.parent.calculation.x_cp_v, 2)).replace('.', ',')} ц. Следовательно, оценка средней урожайности сахарной свеклы на всем массиве равна {str(round(self.parent.calculation.x_cp_v)).replace('.', ',')} ц со средней квадратической ошибкой {str(round(self.parent.calculation.S_xcp, 2)).replace('.', ',')} ц. Оценка среднего квадратического отклонения урожайности на всем массиве равна {str(round(self.parent.calculation.s, 2)).replace('.', ',')} ц."
         )
 
         lst = []
@@ -686,9 +687,13 @@ class Finish(QtWidgets.QDialog):
         types_matrix_results_1 = types_matrix
         loader_results_1_block = True
         loader_results_1_heading_x = lambda iterator: \
-            ["Начало промежутка", "Конец промежутка", "Площадь, га", "Середина интервала",
-             f"y{get_sub('i')} * n{get_sub('i')}", f"(y{get_sub('i')} - x{get_sub('v')}){get_super('2')} * n{get_sub('i')}"][iterator]
-        loader_results_1_heading_y = lambda iterator: str(iterator)
+            ["Урожайность, ц/га\nНачало промежутка", "Урожайность, ц/га\nКонец промежутка",
+             f"Площадь N{get_sub('i')}, га", "Середина интервала",
+             f"y{get_sub('i')} * n{get_sub('i')}",
+             f"(y{get_sub('i')} - x{get_sub('v')}){get_super('2')} * n{get_sub('i')}"][iterator]
+        loader_results_1_heading_y = lambda iterator: \
+        ([str(i + 1) for i in range(self.parent.table_loader1.m)] + ["Сумма", "Среднее\nзначение"])[
+            iterator]
         self.table_loader_results_1 = TableLoader(
             self.parent, loader_results_1_n, loader_results_1_m, data=loader_results_1_data,
             block=loader_results_1_block,
@@ -931,6 +936,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_41.setFont(font)
         self.label_41.setObjectName("label_41")
         self.gridLayout_10.addWidget(self.label_41, 0, 1, 1, 1)
@@ -986,6 +992,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_45.setFont(font)
         self.label_45.setObjectName("label_45")
         self.gridLayout_11.addWidget(self.label_45, 0, 1, 1, 1)
@@ -1083,8 +1090,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
-        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Оценка параметров распределения урожайности и сахарной свеклы по данным выбора</p></body></html>"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Оценка параметров распределения урожайности сахарной свеклы по данным выборки"))
+        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Оценка параметров распределения урожайности сахарной свеклы по данным выборки</p></body></html>"))
         self.label_39.setText(_translate("MainWindow", "<html><head/><body><p>Введите площадь участка, на котором определяется урожайность сахарной свёклы:</p></body></html>"))
         self.label_41.setText(_translate("MainWindow", "<html><head/><body><p>n</p></body></html>"))
         self.label_42.setText(_translate("MainWindow", "<html><head/><body><p>=</p></body></html>"))
@@ -1168,6 +1175,7 @@ class Ui_Form(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_37.setFont(font)
         self.label_37.setObjectName("label_37")
         self.gridLayout_17.addWidget(self.label_37, 0, 1, 1, 1)
@@ -1215,7 +1223,6 @@ class Ui_Form(object):
         font.setFamily("Times New Roman")
         font.setPointSize(14)
         self.label_40.setFont(font)
-        self.label_40.setText("")
         self.label_40.setObjectName("label_40")
         self.gridLayout_18.addWidget(self.label_40, 0, 4, 1, 1)
         self.label_41 = QtWidgets.QLabel(Form)
@@ -1224,6 +1231,7 @@ class Ui_Form(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_41.setFont(font)
         self.label_41.setObjectName("label_41")
         self.gridLayout_18.addWidget(self.label_41, 0, 1, 1, 1)
@@ -1271,7 +1279,6 @@ class Ui_Form(object):
         font.setFamily("Times New Roman")
         font.setPointSize(14)
         self.label_44.setFont(font)
-        self.label_44.setText("")
         self.label_44.setObjectName("label_44")
         self.gridLayout_19.addWidget(self.label_44, 0, 4, 1, 1)
         self.label_45 = QtWidgets.QLabel(Form)
@@ -1280,6 +1287,7 @@ class Ui_Form(object):
         font = QtGui.QFont()
         font.setFamily("Times New Roman")
         font.setPointSize(14)
+        font.setItalic(True)
         self.label_45.setFont(font)
         self.label_45.setObjectName("label_45")
         self.gridLayout_19.addWidget(self.label_45, 0, 1, 1, 1)
@@ -1314,14 +1322,16 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
+        Form.setWindowTitle(_translate("Form", "Оценка параметров распределения урожайности сахарной свеклы по данным выборки"))
         self.label_34.setText(_translate("Form", "="))
         self.label_36.setText(_translate("Form", "<html><head/><body><p>Приближенное значение дисперсии на всем массиве:</p></body></html>"))
         self.label_38.setText(_translate("Form", "="))
         self.label_39.setText(_translate("Form", "<html><head/><body><p>Среднее квадратичное отклонение урожайности на всем массиве:</p></body></html>"))
+        self.label_40.setText(_translate("Form", "ц"))
         self.label_41.setText(_translate("Form", "<html><head/><body><p>S</p></body></html>"))
         self.label_42.setText(_translate("Form", "="))
         self.label_43.setText(_translate("Form", "<html><head/><body><p>Среднее квадратическое отклонение выборочное средней:</p></body></html>"))
+        self.label_44.setText(_translate("Form", "ц"))
         self.label_45.setText(_translate("Form", "<html><head/><body><p><img src=\":/newPrefix/clip_image002.png\"/></p></body></html>"))
         self.pushButton_2.setText(_translate("Form", "Промежуточные расчеты"))
         self.pushButton.setText(_translate("Form", "ОК"))

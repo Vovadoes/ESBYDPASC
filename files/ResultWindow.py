@@ -221,7 +221,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Оценка параметров распределения урожайности и сахарной свеклы по данным выбора"))
+        Form.setWindowTitle(_translate("Form", "Оценка параметров распределения урожайности сахарной свеклы по данным выборки"))
         self.label_34.setText(_translate("Form", "="))
         self.label_36.setText(_translate("Form", "<html><head/><body><p>Приближенное значение дисперсии на всем массиве:</p></body></html>"))
         self.label_37.setText(_translate("Form", "<html><head/><body><p><span style=\" font-family:\'times new roman\'; color:#222222; background-color:#ffffff;\">σ</span><span style=\" font-family:\'times new roman\'; color:#222222; background-color:#ffffff; vertical-align:super;\">2</span></p></body></html>"))

@@ -71,7 +71,8 @@ class mywindow(QtWidgets.QMainWindow):
         ]
         loader1_block = False
         loader1_heading_x = lambda iterator: \
-            ["Начало промежутка", "Конец промежутка", "Площадь, га"][iterator]
+            ["Урожайность, ц/га\nНачало промежутка", "Урожайность, ц/га\nКонец промежутка",
+             "Площадь, га"][iterator]
         loader1_types_matrix = [[int, int, float] for _ in range(loader1_m)]
 
         # loader2_n = self.variables.n
@@ -209,9 +210,13 @@ class Finish(QtWidgets.QDialog):
         types_matrix_results_1 = types_matrix
         loader_results_1_block = True
         loader_results_1_heading_x = lambda iterator: \
-            ["Начало промежутка", "Конец промежутка", f"Площадь N{get_sub('i')}, га", "Середина интервала",
-             f"y{get_sub('i')} * n{get_sub('i')}", f"(y{get_sub('i')} - x{get_sub('v')}){get_super('2')} * n{get_sub('i')}"][iterator]
-        loader_results_1_heading_y = lambda iterator: ([str(i + 1) for i in range(self.parent.table_loader1.m)] + ["Сумма", "Среднее\nзначение"])[iterator]
+            ["Урожайность, ц/га\nНачало промежутка", "Урожайность, ц/га\nКонец промежутка",
+             f"Площадь N{get_sub('i')}, га", "Середина интервала",
+             f"y{get_sub('i')} * n{get_sub('i')}",
+             f"(y{get_sub('i')} - x{get_sub('v')}){get_super('2')} * n{get_sub('i')}"][iterator]
+        loader_results_1_heading_y = lambda iterator: \
+        ([str(i + 1) for i in range(self.parent.table_loader1.m)] + ["Сумма", "Среднее\nзначение"])[
+            iterator]
         self.table_loader_results_1 = TableLoader(
             self.parent, loader_results_1_n, loader_results_1_m, data=loader_results_1_data,
             block=loader_results_1_block,
